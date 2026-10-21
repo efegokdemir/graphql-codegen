@@ -89,29 +89,25 @@ export const preset: Types.OutputPreset<PresetConfig> = {
           content: `/* eslint-disable eslint-comments/disable-enable-pair */\n/* eslint-disable eslint-comments/no-unlimited-disable */\n/* eslint-disable */`,
         },
       },
-      // 2. Import all the generated API types or generate all the types from the schema.
-      importTypes
-        ? {
-            [`add`]: {
-              content: `import${
-                isDts ? ' type ' : ' '
-              }* as ${namespacedImportName} from '${importTypesFrom}';\n`,
+      // 2. Generate all the types from the schema when no pre-generated types are provided.
+      ...(!importTypes
+        ? [
+            {
+              [`typescript`]: {
+                enumsAsTypes: isDts,
+                useTypeImports: isDts,
+                useImplementingTypes: true,
+              },
             },
-          }
-        : {
-            [`typescript`]: {
-              enumsAsTypes: isDts,
-              useTypeImports: isDts,
-              useImplementingTypes: true,
-            },
-          },
+          ]
+        : []),
       // 3. Generate the operations (i.e. queries, mutations, and fragments types)
       {
         [`typescript-operations`]: {
           useTypeImports: isDts, // Use `import type` instead of `import`
-          preResolveTypes: false, // Use Pick<...> instead of primitives
           mergeFragmentTypes: true, // Merge equal fragment interfaces. Avoids adding `| {}` to Metaobject
           skipTypename: options.presetConfig.skipTypenameInOperations ?? true, // Skip __typename fields
+          importSchemaTypesFrom: importTypes ? importTypesFrom : undefined,
           namespacedImportName: importTypes ? namespacedImportName : undefined,
         },
       },

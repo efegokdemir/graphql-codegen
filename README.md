@@ -82,9 +82,8 @@ export default {
       schema: './path/to/my-api-schema.json',
       documents: ['./src/graphql/my-api/*.{ts,tsx,js,jsx}'],
       presetConfig: {
-        // Generate the line `import type * as MyAPI from 'path/to/my-api-types';`.
-        // If you don't have generated types for your API beforehand,
-        // omit this parameter to generate the types inline.
+        // Reuse generated API types for enums and input objects.
+        // Operation result fields are generated from the selected fields.
         importTypes: {
           namespace: 'MyAPI',
           from: 'path/to/my-api-types',
@@ -110,17 +109,20 @@ export default {
 > [!TIP]
 > To use enums instead of types, change the generated file extension to `.ts` instead of `.d.ts`.
 
-Then, include queries in your app that match the given schema and documents paths. For example, for a query `layout` like the one in the example above, the generated `d.ts` file will look like this:
+Then, include queries in your app that match the given schema and documents paths. For example, for a query `layout` like the one in the example above, the generated `d.ts` file will look like this. Shared enum and input types are imported when an operation uses them; this query only selects object fields, so it needs no schema import.
 
 ```ts
 // my-api.generated.d.ts
-import type * as MyAPI from 'path/to/my-api-types';
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]};
+/** Internal type. DO NOT USE DIRECTLY. */
+export type Incremental<T> =
+  | T
+  | {[P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never};
 
-export type LayoutQueryVariables = MyAPI.Exact<{[key: string]: never}>;
+export type LayoutQueryVariables = Exact<{[key: string]: never}>;
 
-export type LayoutQuery = {
-  shop: Pick<MyAPI.Shop, 'name' | 'description'>;
-};
+export type LayoutQuery = {shop: {name: string; description: string | null}};
 
 interface GeneratedQueryTypes {
   '#graphql\n  query layout {\n    shop {\n      name\n      description\n    }\n  }\n': {
