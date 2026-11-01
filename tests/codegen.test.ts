@@ -65,6 +65,26 @@ describe('Shopify GraphQL Codegen', async () => {
     );
   });
 
+  it('uses configured naming conventions in the operation registry', async () => {
+    const result = await executeCodegen({
+      ...getCodegenOptions('acronym-operation.ts'),
+      config: {
+        namingConvention: 'keep',
+        typesPrefix: 'I',
+        typesSuffix: 'Types',
+        operationResultSuffix: 'Result',
+      },
+    });
+    const generatedCode = result[0].content;
+
+    expect(generatedCode).toContain(
+      'export type IsupplementQRCodeQueryResultTypes =',
+    );
+    expect(generatedCode).toContain(
+      'return: IsupplementQRCodeQueryResultTypes, variables: IsupplementQRCodeQueryVariablesTypes',
+    );
+  });
+
   it('uses plain imports for .ts files', async () => {
     const result = await executeCodegen(
       getCodegenOptions('simple-operations.ts', 'out.ts'),
